@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hostelapp/providers/auth_provider.dart';
-import 'package:hostelapp/services/chat_service.dart';
-import 'package:hostelapp/services/staff_service.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/chat_service.dart';
+import '../../services/staff_service.dart';
+import 'staff_drawer.dart';
 import 'package:provider/provider.dart';
 
 // A type-safe data class for chat contacts
@@ -156,7 +157,9 @@ class _StaffChatScreenState extends State<StaffChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLargeScreen = MediaQuery.of(context).size.width > 800;
     return Scaffold(
+      drawer: StaffDrawer(),
       appBar: AppBar(
         title: Text(_selectedResident != null ? 'Chat with ${_selectedResident!.name}' : 'Resident Chat'),
         backgroundColor: Colors.indigo,

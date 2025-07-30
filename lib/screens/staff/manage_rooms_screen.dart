@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'edit_room_screen.dart';
+import 'staff_drawer.dart';
 
 class ManageRoomsScreen extends StatefulWidget {
   const ManageRoomsScreen({super.key});
@@ -96,6 +97,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: StaffDrawer(),
       appBar: AppBar(
         title: const Text('Manage My Rooms'),
         backgroundColor: Colors.indigo,

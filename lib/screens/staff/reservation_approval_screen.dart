@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/staff_service.dart';
+import 'staff_drawer.dart';
 
 class ReservationApprovalScreen extends StatefulWidget {
   const ReservationApprovalScreen({super.key});
@@ -231,6 +232,7 @@ class _ReservationApprovalScreenState extends State<ReservationApprovalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: StaffDrawer(),
       appBar: AppBar(
         title: const Text('Reservation Approvals'),
         backgroundColor: Colors.indigo,

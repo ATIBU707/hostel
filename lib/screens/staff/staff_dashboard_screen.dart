@@ -7,6 +7,7 @@ import 'reservation_approval_screen.dart';
 import 'staff_reports_screen.dart';
 import 'staff_chat_screen.dart';
 import 'staff_profile_screen.dart';
+import 'staff_drawer.dart';
 
 class StaffDashboardScreen extends StatefulWidget {
   const StaffDashboardScreen({super.key});
@@ -51,6 +52,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen>
       final role = userProfile?['role'] ?? 'staff';
 
       return Scaffold(
+        drawer: StaffDrawer(),
         appBar: AppBar(
           title: Text('Staff Portal - ${role.toUpperCase()}'),
           backgroundColor: Colors.indigo,

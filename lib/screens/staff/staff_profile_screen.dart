@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'staff_drawer.dart';
 
 class StaffProfileScreen extends StatefulWidget {
   const StaffProfileScreen({super.key});
@@ -153,6 +154,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         final role = userProfile?['role'] ?? 'staff';
 
         return Scaffold(
+          drawer: StaffDrawer(),
           appBar: AppBar(
             title: const Text('My Profile'),
             backgroundColor: Colors.indigo,
