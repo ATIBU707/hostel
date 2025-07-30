@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'staff_drawer.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -85,9 +86,11 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add New Room'),
+        centerTitle: true,
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
+      drawer: const StaffDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
