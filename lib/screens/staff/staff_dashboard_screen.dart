@@ -16,15 +16,10 @@ class StaffDashboardScreen extends StatefulWidget {
   State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
 }
 
-class _StaffDashboardScreenState extends State<StaffDashboardScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  int _selectedIndex = 0;
-
+class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
     // Load staff data when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -36,12 +31,6 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen>
     // Load all staff-specific data with access control
     authProvider.fetchStaffMaintenanceRequests();
     // TODO: Add other data loading methods
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -142,62 +131,9 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen>
                 ],
               ),
             ),
-            // Tab Navigation
-            Container(
-              color: Colors.grey[100],
-              child: TabBar(
-                controller: _tabController,
-                onTap: (index) => setState(() => _selectedIndex = index),
-                labelColor: Colors.indigo,
-                unselectedLabelColor: Colors.grey[600],
-                indicatorColor: Colors.indigo,
-                isScrollable: true,
-                tabs: const [
-                  Tab(
-                    icon: Icon(Icons.dashboard),
-                    text: 'Overview',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.add_home),
-                    text: 'Add Room',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.home_work),
-                    text: 'My Rooms',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.approval),
-                    text: 'Reservations',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.analytics),
-                    text: 'Reports',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.chat),
-                    text: 'Chat',
-                  ),
-                  Tab(
-                    icon: Icon(Icons.person),
-                    text: 'Profile',
-                  ),
-                ],
-              ),
-            ),
-            // Tab Content
+            // Dashboard Content
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(authProvider),
-                  const AddRoomScreen(),
-                  const ManageRoomsScreen(),
-                  const ReservationApprovalScreen(),
-                  const StaffReportsScreen(),
-                  const StaffChatScreen(),
-                  const StaffProfileScreen(),
-                ],
-              ),
+              child: _buildOverviewTab(authProvider),
             ),
           ],
         ),
