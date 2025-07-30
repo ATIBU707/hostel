@@ -212,7 +212,7 @@ class _StaffChatScreenState extends State<StaffChatScreen> {
       ),
       child: const Row(
         children: [
-          Icon(Icons.people, color: Colors.indigo),
+          // Icon(Icons.people, color: Colors.indigo),
           SizedBox(width: 8),
           Text('All Residents', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         ],
