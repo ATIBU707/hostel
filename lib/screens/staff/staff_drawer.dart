@@ -5,6 +5,7 @@ import 'staff_chat_screen.dart';
 import 'staff_dashboard_screen.dart';
 import 'staff_profile_screen.dart';
 import 'staff_reports_screen.dart';
+import 'add_room_screen.dart';
 
 class StaffDrawer extends StatelessWidget {
   const StaffDrawer({super.key});
@@ -44,6 +45,16 @@ class StaffDrawer extends StatelessWidget {
                Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => ManageRoomsScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.add),
+            title: Text('Add Room'),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => AddRoomScreen()),
               );
             },
           ),
