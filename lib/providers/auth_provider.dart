@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   List<Map<String, dynamic>>? _staffMembers;
   List<Map<String, dynamic>>? _staffMaintenanceRequests;
   List<Map<String, dynamic>> _residentBookings = [];
+  List<Map<String, dynamic>> _allBookings = [];
   bool _hasApprovedBooking = false;
   List<Map<String, dynamic>> _staffBookings = [];
   List<Map<String, dynamic>> get staffBookings => _staffBookings;
@@ -33,6 +34,7 @@ class AuthProvider extends ChangeNotifier {
   List<Map<String, dynamic>>? get staffMembers => _staffMembers;
   List<Map<String, dynamic>>? get staffMaintenanceRequests => _staffMaintenanceRequests;
   List<Map<String, dynamic>> get residentBookings => _residentBookings;
+  List<Map<String, dynamic>> get allBookings => _allBookings;
   bool get hasApprovedBooking => _hasApprovedBooking;
 
   Map<String, dynamic>? get activeBooking {
@@ -102,6 +104,7 @@ class AuthProvider extends ChangeNotifier {
       }
       // await _loadAnnouncements();
       await fetchResidentBookings();
+      await fetchAllBookings();
     } catch (e) {
       _setError('Failed to load resident data: ${_getErrorMessage(e)}');
     } finally {
@@ -274,6 +277,20 @@ class AuthProvider extends ChangeNotifier {
       _hasApprovedBooking = _residentBookings.any((booking) => booking['status'] == 'approved');
     } catch (e) {
       _setError('Failed to load your bookings: ${_getErrorMessage(e)}');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> fetchAllBookings() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final response = await Supabase.instance.client.from('bookings').select('bed_id, status');
+      _allBookings = List<Map<String, dynamic>>.from(response as List);
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to load all bookings: ${_getErrorMessage(e)}');
     } finally {
       _setLoading(false);
     }
@@ -511,6 +528,7 @@ class AuthProvider extends ChangeNotifier {
     _availableRooms = null;
     _staffMembers = null;
     _staffMaintenanceRequests = null;
+    _allBookings = [];
     _errorMessage = null;
     _isLoading = false;
     notifyListeners();

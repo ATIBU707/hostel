@@ -23,13 +23,23 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
   Future<void> _loadInitialData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.fetchAvailableRooms();
-    await authProvider.fetchResidentBookings();
+    await authProvider.fetchAllBookings(); // Fetch all bookings
     _updateBookingStatuses();
   }
 
   void _updateBookingStatuses() {
-    final bookings = Provider.of<AuthProvider>(context, listen: false).residentBookings;
-        final Map<String, String> statuses = { for (var booking in bookings) booking['bed_id'].toString() : booking['status'] };
+    final bookings = Provider.of<AuthProvider>(context, listen: false).allBookings;
+    final Map<String, String> statuses = {};
+    for (var booking in bookings) {
+      final bedId = booking['bed_id'].toString();
+      final status = booking['status'];
+
+      // Only show available beds, or beds with rejected bookings
+      if (status == 'approved' || status == 'pending') {
+        statuses[bedId] = status;
+      }
+    }
+
     if (mounted) {
       setState(() {
         _bookingStatuses = statuses;
@@ -366,9 +376,7 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                                         ? 'Reserved'
                                         : bookingStatus == 'pending'
                                             ? 'Pending'
-                                            : bookingStatus == 'rejected'
-                                                ? 'Rejected'
-                                                : 'Book'
+                                            : 'Book'
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: bookingStatus == 'approved'
