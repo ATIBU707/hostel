@@ -104,14 +104,6 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
           }
 
           final rooms = authProvider.availableRooms;
-          
-          // Debug information
-          print('DEBUG: rooms data: $rooms');
-          print('DEBUG: rooms length: ${rooms?.length}');
-          if (rooms != null && rooms.isNotEmpty) {
-            print('DEBUG: first room structure: ${rooms[0]}');
-            print('DEBUG: first room beds: ${rooms[0]['beds']}');
-          }
 
           if (rooms == null || rooms.isEmpty) {
             return Center(
@@ -166,6 +158,8 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                 }
                 
                 print('DEBUG: Room ${room['room_number']} will be displayed with ${beds.length} beds');
+
+                final allBedsApproved = beds.isNotEmpty && beds.every((bed) => _bookingStatuses[bed['id'].toString()] == 'approved');
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
@@ -271,128 +265,119 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                         const Divider(),
                         const SizedBox(height: 8),
                         
-                        const Text(
-                          'Available Beds:',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        ...beds.map((bed) {
-                          final bedId = bed['id'].toString();
-                          final bookingStatus = _bookingStatuses[bedId];
-                          
-                          return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey[300]!),
-                              borderRadius: BorderRadius.circular(8),
-                              color: bookingStatus != null ? Colors.grey[100] : null,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.bed,
-                                  color: bookingStatus != null ? Colors.grey[400] : Colors.grey[600],
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Bed ${bed['bed_number']}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: bookingStatus != null ? Colors.grey[600] : Colors.black,
+                        if (allBedsApproved) ...[
+                          ListTile(
+                            leading: Icon(Icons.block, color: Colors.red),
+                            title: Text('Room Taken'),
+                            subtitle: Text('All beds in this room are reserved.'),
+                          ),
+                        ] else ...[
+                          const Text(
+                            'Available Beds:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          ...beds.map((bed) {
+                            final bedId = bed['id'].toString();
+                            final bookingStatus = _bookingStatuses[bedId];
+                            
+                            // Hide beds that are approved or pending
+                            if (bookingStatus == 'approved' || bookingStatus == 'pending') {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.bed,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Bed ${bed['bed_number']}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: bookingStatus != null ? null : () async {
-                                    // Show confirmation dialog
-                                    final confirmed = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('Confirm Booking'),
-                                        content: Text(
-                                          'Do you want to book Bed ${bed['bed_number']} in Room ${room['room_number']}?\n\nRent: KSh ${room['rent_amount']}/month',
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      // Show confirmation dialog
+                                      final confirmed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Confirm Booking'),
+                                          content: Text(
+                                            'Do you want to book Bed ${bed['bed_number']} in Room ${room['room_number']}?\n\nRent: KSh ${room['rent_amount']}/month',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              child: const Text('Confirm'),
+                                            ),
+                                          ],
                                         ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, false),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () => Navigator.pop(context, true),
-                                            child: const Text('Confirm'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    
-                                    if (confirmed == true) {
-                                      try {
-                                        await authProvider.bookRoom(
-                                          roomId: room['id'].toString(),
-                                          bedId: bed['id'].toString(),
-                                        );
-                                        
-                                        if (mounted) {
-                                          // Update the status locally for immediate feedback
-                                          setState(() {
-                                            _bookingStatuses[bedId] = 'pending';
-                                          });
-
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Booking request sent! Your booking is pending approval.'),
-                                              backgroundColor: Colors.orange,
-                                            ),
+                                      );
+                                      
+                                      if (confirmed == true) {
+                                        try {
+                                          await authProvider.bookRoom(
+                                            roomId: room['id'].toString(),
+                                            bedId: bed['id'].toString(),
                                           );
+                                          
+                                          if (mounted) {
+                                            // Update the status locally for immediate feedback
+                                            setState(() {
+                                              _bookingStatuses[bedId] = 'pending';
+                                            });
 
-                                          // Refresh data to ensure consistency
-                                          _loadInitialData();
-                                        }
-                                      } catch (e) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Booking failed: ${e.toString()}'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Booking request sent! Your booking is pending approval.'),
+                                                backgroundColor: Colors.orange,
+                                              ),
+                                            );
+
+                                            // Refresh data to ensure consistency
+                                            _loadInitialData();
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Booking failed: ${e.toString()}'),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
                                         }
                                       }
-                                    }
-                                  },
-                                  icon: Icon(
-                                    bookingStatus == 'approved' 
-                                        ? Icons.check_circle 
-                                        : bookingStatus == 'pending' 
-                                            ? Icons.hourglass_empty
-                                            : Icons.book_online,
-                                    size: 16
+                                    },
+                                    icon: Icon(Icons.book_online, size: 16),
+                                    label: Text('Book'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
                                   ),
-                                  label: Text(
-                                    bookingStatus == 'approved'
-                                        ? 'Reserved'
-                                        : bookingStatus == 'pending'
-                                            ? 'Pending'
-                                            : 'Book'
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: bookingStatus == 'approved'
-                                        ? Colors.blue
-                                        : bookingStatus == 'pending'
-                                            ? Colors.orange
-                                            : bookingStatus == 'rejected'
-                                                ? Colors.red
-                                                : Colors.green,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
                       ],
                     ),
                   ),
