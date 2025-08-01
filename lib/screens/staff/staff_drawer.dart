@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import 'manage_rooms_screen.dart';
 import 'reservation_approval_screen.dart';
 import 'staff_chat_screen.dart';
@@ -13,21 +15,28 @@ class StaffDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-            ),
-            child: Text(
-              'Hostel Staff',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          return ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              UserAccountsDrawerHeader(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                ),
+                accountName: Text(authProvider.userProfile?['full_name'] ?? 'Staff Member'),
+                accountEmail: Text(authProvider.user?.email ?? ''),
+                currentAccountPicture: CircleAvatar(
+                  backgroundImage: authProvider.userProfile?['avatar_url'] != null &&
+                          authProvider.userProfile!['avatar_url'].isNotEmpty
+                      ? NetworkImage(authProvider.userProfile!['avatar_url'])
+                      : null,
+                  child: authProvider.userProfile?['avatar_url'] == null ||
+                          authProvider.userProfile!['avatar_url'].isEmpty
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
+                ),
               ),
-            ),
-          ),
           ListTile(
             leading: Icon(Icons.dashboard),
             title: Text('Dashboard'),
@@ -111,6 +120,8 @@ class StaffDrawer extends StatelessWidget {
             },
           ),
         ],
+      );
+        },
       ),
     );
   }

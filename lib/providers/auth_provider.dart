@@ -515,27 +515,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Profile Management
-  Future<void> updateProfile({
-    required String fullName,
-    String? phone,
-    String? avatarUrl,
-  }) async {
-    if (_user == null) return;
-    _setLoading(true);
-    _clearError();
-    try {
-      await AuthService.updateUserProfile(
-        fullName: fullName,
-        phone: phone,
-        avatarUrl: avatarUrl,
-      );
-      await _loadUserProfile();
-    } catch (e) {
-      _setError(_getErrorMessage(e));
-    } finally {
-      _setLoading(false);
-    }
-  }
+
 
   // State Management Helpers
   void _setLoading(bool value) {
@@ -575,6 +555,77 @@ class AuthProvider extends ChangeNotifier {
     if (_user == null) throw Exception('User not authenticated');
     
     return await StaffService.getStaffRooms(_user!.id);
+  }
+
+  Future<void> updateProfile({
+    required String email,
+    required String fullName,
+    required String phone,
+    Uint8List? imageBytes,
+    String? imageFileExtension,
+  }) async {
+    if (_user == null) throw Exception('User not authenticated');
+    try {
+      _setLoading(true);
+      String? imageUrl;
+
+      if (imageBytes != null && imageFileExtension != null) {
+        final imageName = '${DateTime.now().millisecondsSinceEpoch}.$imageFileExtension';
+        final imagePath = '${_user!.id}/$imageName';
+
+        await Supabase.instance.client.storage.from('avatars').uploadBinary(
+              imagePath,
+              imageBytes,
+              fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+            );
+        imageUrl = Supabase.instance.client.storage.from('avatars').getPublicUrl(imagePath);
+      }
+
+      final updates = {
+        'id': _user!.id,
+        'full_name': fullName,
+        'phone': phone,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (imageUrl != null) {
+        updates['avatar_url'] = imageUrl;
+      }
+
+      // Update email if it has changed
+      if (email != _user!.email) {
+        await Supabase.instance.client.auth.updateUser(UserAttributes(email: email));
+      }
+
+      await Supabase.instance.client.from('profiles').upsert(updates);
+      await _loadUserProfile(); // Refresh profile data
+    } catch (e) {
+      _setError('Failed to update profile: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> removeProfilePicture() async {
+    if (_user == null) throw Exception('User not authenticated');
+    try {
+      _setLoading(true);
+      // We can't easily delete the folder or find the exact file name from here.
+      // A better approach would be to use a Supabase function or handle this differently.
+      // For now, we will just nullify the URL in the profile.
+      await Supabase.instance.client.from('profiles').update({
+        'avatar_url': null,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', _user!.id);
+
+      await _loadUserProfile(); // Refresh profile data
+    } catch (e) {
+      _setError('Failed to remove profile picture: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
   }
 
   Future<void> updateRoom({

@@ -35,6 +35,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.updateProfile(
+      email: authProvider.user?.email ?? '',
       fullName: _fullNameController.text.trim(),
       phone: _phoneController.text.trim(),
     );
