@@ -35,6 +35,8 @@ class _StaffChatScreenState extends State<StaffChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat with Residents'),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
