@@ -208,7 +208,7 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                                   const Spacer(),
                                   const Icon(Icons.attach_money, size: 16, color: Colors.green),
                                   Text(
-                                    'KSh ${room['rent_amount']}/month',
+                                    'UGX ${room['rent_amount']}/month',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green,

@@ -214,7 +214,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '\$${rentAmount.toStringAsFixed(0)}/month',
+                      'UGX ${rentAmount.toStringAsFixed(0)}',
                       style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: colors.onSurface),
                     ),
                   ],
