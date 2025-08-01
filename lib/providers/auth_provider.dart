@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/resident_service.dart';
 import '../services/staff_service.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class AuthProvider extends ChangeNotifier {
   // Internal state
@@ -375,35 +377,65 @@ class AuthProvider extends ChangeNotifier {
     required int capacity,
     required double rentAmount,
     String? description,
+    required String hostelName,
+    required Uint8List imageBytes,
+    required String imageName,
   }) async {
     if (_user == null || userRole != 'staff') {
       throw Exception('Only staff members can add rooms');
     }
-    
+
     _setLoading(true);
     _clearError();
-    
+
     try {
-      // Insert room into Supabase
+      // 1. Compress image if not on web
+      Uint8List finalImageBytes = imageBytes;
+      if (!kIsWeb) {
+        final compressedBytes = await FlutterImageCompress.compressWithList(
+          imageBytes,
+          minHeight: 800,
+          minWidth: 800,
+          quality: 85,
+        );
+        finalImageBytes = Uint8List.fromList(compressedBytes);
+      }
+
+      // 2. Upload image to Supabase Storage
+      final imagePath = '/${_user!.id}/${DateTime.now().toIso8601String()}_$imageName';
+      await Supabase.instance.client.storage.from('room-images').uploadBinary(
+            imagePath,
+            finalImageBytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
+
+      // 3. Get the public URL of the uploaded image
+      final imageUrl = Supabase.instance.client.storage
+          .from('room-images')
+          .getPublicUrl(imagePath);
+
+      // 4. Insert room into Supabase
       final response = await Supabase.instance.client
           .from('rooms')
           .insert({
             'room_number': roomNumber,
             'room_type': roomType,
             'capacity': capacity,
-            // 'price_per_night': rentAmount,
+            'rent_amount': rentAmount,
             'description': description,
-            'staff_id': _user!.id, // Associate room with staff member
+            'staff_id': _user!.id,
             'status': 'available',
             'created_at': DateTime.now().toIso8601String(),
+            'hostel_name': hostelName,
+            'image_url': imageUrl,
           })
           .select()
           .single();
-      
-      // Create beds for the room based on capacity
+
+      // 5. Create beds for the room based on capacity
       final roomId = response['id'];
       final List<Map<String, dynamic>> beds = [];
-      
+
       for (int i = 1; i <= capacity; i++) {
         beds.add({
           'room_id': roomId,
@@ -411,17 +443,15 @@ class AuthProvider extends ChangeNotifier {
           'is_available': true,
         });
       }
-      
-      // Insert beds into Supabase
+
+      // 6. Insert beds into Supabase
       if (beds.isNotEmpty) {
-        await Supabase.instance.client
-            .from('beds')
-            .insert(beds);
+        await Supabase.instance.client.from('beds').insert(beds);
       }
-      
-      // Refresh available rooms data
+
+      // 7. Refresh available rooms data
       await fetchAvailableRooms();
-      
+
     } catch (e) {
       _setError('Failed to add room: ${_getErrorMessage(e)}');
       rethrow;

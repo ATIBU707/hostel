@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'staff_drawer.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +20,10 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   final _capacityController = TextEditingController();
   final _rentController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _hostelNameController = TextEditingController();
+
+  Uint8List? _imageBytes;
+  String? _imageName;
   
   String _selectedRoomType = 'single';
   bool _isLoading = false;
@@ -36,11 +43,39 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     _capacityController.dispose();
     _rentController.dispose();
     _descriptionController.dispose();
+    _hostelNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        setState(() {
+          _imageBytes = result.files.single.bytes;
+          _imageName = result.files.single.name;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
   }
 
   Future<void> _addRoom() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_imageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an image for the room.')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -56,6 +91,9 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
         description: _descriptionController.text.trim().isEmpty 
             ? null 
             : _descriptionController.text.trim(),
+        hostelName: _hostelNameController.text.trim(),
+        imageBytes: _imageBytes!,
+        imageName: _imageName!,
       );
 
       if (mounted) {
@@ -106,6 +144,24 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Hostel Name
+              TextFormField(
+                controller: _hostelNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Hostel Name',
+                  hintText: 'e.g., Sunrise Hostels',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.home_work),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter the hostel name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
               
               // Room Number
               TextFormField(
@@ -201,6 +257,36 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   prefixIcon: Icon(Icons.description),
                 ),
                 maxLines: 3,
+              ),
+              const SizedBox(height: 24),
+
+              // Image Picker
+              const Text(
+                'Room Image',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    _imageBytes == null
+                        ? const Icon(Icons.image, size: 60, color: Colors.grey)
+                        : Image.memory(_imageBytes!, height: 150, fit: BoxFit.cover),
+                    const SizedBox(height: 12),
+                    Text(_imageName ?? 'No image selected'),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Select Image'),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               
