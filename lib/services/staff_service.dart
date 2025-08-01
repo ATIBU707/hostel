@@ -55,22 +55,27 @@ class StaffService {
 
   static Future<void> updateRoom({
     required String roomId,
+    required String hostelName,
     required String roomNumber,
     required String roomType,
     required int capacity,
     required double rentAmount,
-    String? description,
-    required bool isAvailable,
+    String? imageUrl,
   }) async {
     try {
-      await _supabase.from('rooms').update({
+      final updates = {
+        'hostel_name': hostelName,
         'room_number': roomNumber,
         'room_type': roomType,
         'capacity': capacity,
         'rent_amount': rentAmount,
-        'description': description,
-        'is_available': isAvailable,
-      }).eq('id', roomId);
+      };
+
+      if (imageUrl != null) {
+        updates['image_url'] = imageUrl;
+      }
+
+      await _supabase.from('rooms').update(updates).eq('id', roomId);
     } catch (e) {
       throw Exception('Failed to update room: $e');
     }

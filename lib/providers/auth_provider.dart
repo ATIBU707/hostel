@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -578,24 +579,47 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> updateRoom({
     required String roomId,
+    required String hostelName,
     required String roomNumber,
     required String roomType,
     required int capacity,
     required double rentAmount,
-    String? description,
-    required bool isAvailable,
+    Uint8List? imageBytes,
+    String? imageFileExtension,
   }) async {
     if (_user == null) throw Exception('User not authenticated');
-    
-    await StaffService.updateRoom(
-      roomId: roomId,
-      roomNumber: roomNumber,
-      roomType: roomType,
-      capacity: capacity,
-      rentAmount: rentAmount,
-      description: description,
-      isAvailable: isAvailable,
-    );
+
+    try {
+      _setLoading(true);
+      String? imageUrl;
+
+      if (imageBytes != null && imageFileExtension != null) {
+        final imageName = '${DateTime.now().millisecondsSinceEpoch}.$imageFileExtension';
+        final imagePath = '/room_images/${_user!.id}/$imageName';
+
+        await Supabase.instance.client.storage.from('room-images').uploadBinary(
+              imagePath,
+              imageBytes,
+              fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+            );
+        imageUrl = Supabase.instance.client.storage.from('room-images').getPublicUrl(imagePath);
+      }
+
+      await StaffService.updateRoom(
+        roomId: roomId,
+        hostelName: hostelName,
+        roomNumber: roomNumber,
+        roomType: roomType,
+        capacity: capacity,
+        rentAmount: rentAmount,
+        imageUrl: imageUrl,
+      );
+    } catch (e) {
+      _setError('Failed to update room: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
   }
 
   Future<void> deleteRoom(String roomId) async {

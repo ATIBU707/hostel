@@ -1,10 +1,15 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../providers/auth_provider.dart';
 
 class EditRoomScreen extends StatefulWidget {
   final Map<String, dynamic> room;
-  
+
   const EditRoomScreen({super.key, required this.room});
 
   @override
@@ -13,44 +18,48 @@ class EditRoomScreen extends StatefulWidget {
 
 class _EditRoomScreenState extends State<EditRoomScreen> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _hostelNameController;
   late final TextEditingController _roomNumberController;
   late final TextEditingController _capacityController;
   late final TextEditingController _rentController;
-  late final TextEditingController _descriptionController;
-  
-  late String _selectedRoomType;
-  late bool _isAvailable;
-  bool _isLoading = false;
 
-  final List<String> _roomTypes = [
-    'single',
-    'double',
-    'triple',
-    'quad',
-    'dormitory'
-  ];
+  late String _selectedRoomType;
+  bool _isLoading = false;
+  XFile? _imageFile;
+  Uint8List? _imageData;
+  String? _imageUrl;
+
+  final List<String> _roomTypes = ['single', 'double', 'triple', 'quad', 'dormitory'];
 
   @override
   void initState() {
     super.initState();
-    
-    // Initialize controllers with current room data
+    _hostelNameController = TextEditingController(text: widget.room['hostel_name'] ?? '');
     _roomNumberController = TextEditingController(text: widget.room['room_number'] ?? '');
     _capacityController = TextEditingController(text: widget.room['capacity']?.toString() ?? '');
     _rentController = TextEditingController(text: widget.room['rent_amount']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: widget.room['description'] ?? '');
-    
     _selectedRoomType = widget.room['room_type'] ?? 'single';
-    _isAvailable = widget.room['is_available'] ?? true;
+    _imageUrl = widget.room['image_url'];
   }
 
   @override
   void dispose() {
+    _hostelNameController.dispose();
     _roomNumberController.dispose();
     _capacityController.dispose();
     _rentController.dispose();
-    _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      final imageData = await pickedFile.readAsBytes();
+      setState(() {
+        _imageFile = pickedFile;
+        _imageData = imageData;
+      });
+    }
   }
 
   Future<void> _updateRoom() async {
@@ -60,24 +69,22 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
       await authProvider.updateRoom(
         roomId: widget.room['id'],
+        hostelName: _hostelNameController.text.trim(),
         roomNumber: _roomNumberController.text.trim(),
         roomType: _selectedRoomType,
         capacity: int.parse(_capacityController.text),
         rentAmount: double.parse(_rentController.text),
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
-            : _descriptionController.text.trim(),
-        isAvailable: _isAvailable,
+        imageBytes: _imageData,
+        imageFileExtension: _imageFile?.mimeType?.split('/').last ?? _imageFile?.path.split('.').last,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Room updated successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Room updated successfully!', style: GoogleFonts.poppins()),
+            backgroundColor: Colors.green.shade600,
           ),
         );
         Navigator.pop(context, true); // Return true to indicate success
@@ -86,235 +93,166 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating room: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Error updating room: $e', style: GoogleFonts.poppins()),
+            backgroundColor: Colors.red.shade600,
           ),
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        title: Text('Edit Room ${widget.room['room_number']}'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        title: Text('Edit Room', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        backgroundColor: colors.surface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: colors.shadow.withOpacity(0.2),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: colors.outline.withOpacity(0.2), height: 1.0),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Room Details',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Room Number
-              TextFormField(
-                controller: _roomNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Room Number',
-                  hintText: 'e.g., 101, A-205',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.room),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter room number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Room Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedRoomType,
-                decoration: const InputDecoration(
-                  labelText: 'Room Type',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.category),
-                ),
-                items: _roomTypes.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Text(type.toUpperCase()),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedRoomType = value!);
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Capacity
-              TextFormField(
-                controller: _capacityController,
-                decoration: const InputDecoration(
-                  labelText: 'Capacity',
-                  hintText: 'Number of beds',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.people),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter capacity';
-                  }
-                  final capacity = int.tryParse(value);
-                  if (capacity == null || capacity <= 0) {
-                    return 'Please enter valid capacity';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Rent Amount
-              TextFormField(
-                controller: _rentController,
-                decoration: const InputDecoration(
-                  labelText: 'Rent Amount (per semester)',
-                  hintText: 'e.g., 5000',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter rent amount';
-                  }
-                  final rent = double.tryParse(value);
-                  if (rent == null || rent <= 0) {
-                    return 'Please enter valid rent amount';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Description
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Room features, amenities, etc.',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.description),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              
-              // Availability Toggle
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Room Availability',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            _isAvailable 
-                                ? 'Room is available for booking'
-                                : 'Room is not available for booking',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Switch(
-                        value: _isAvailable,
-                        onChanged: (value) {
-                          setState(() => _isAvailable = value);
-                        },
-                        activeColor: Colors.green,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildImagePicker(colors),
               const SizedBox(height: 24),
-              
-              // Update Room Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _updateRoom,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Update Room',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                ),
-              ),
+              _buildTextField(_hostelNameController, 'Hostel Name', 'e.g., Grand Hostel', Icons.home_work_outlined),
               const SizedBox(height: 16),
-              
-              // Room Stats Card
-              if (widget.room['occupied_beds'] != null)
-                Card(
-                  color: Colors.blue[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info, color: Colors.blue[700]),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Room Statistics',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Currently occupied: ${widget.room['occupied_beds']} out of ${widget.room['capacity']} beds',
-                          style: TextStyle(color: Colors.blue[700]),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _buildTextField(_roomNumberController, 'Room Name/Number', 'e.g., 101, Block A', Icons.meeting_room_outlined),
+              const SizedBox(height: 16),
+              _buildRoomTypeDropdown(colors),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(_capacityController, 'Bed Capacity', 'e.g., 2', Icons.groups_outlined, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildTextField(_rentController, 'Price (UGX)', 'e.g., 500000', Icons.price_change_outlined, keyboardType: TextInputType.number)),
+                ],
+              ),
+              const SizedBox(height: 32),
+              _buildUpdateButton(colors),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(ColorScheme colors) {
+    return Center(
+      child: Stack(
+        children: [
+          Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: colors.outline.withOpacity(0.3), width: 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: _imageData != null
+                ? Image.memory(_imageData!, fit: BoxFit.cover)
+                : (_imageUrl != null && _imageUrl!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: _imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
+                        errorWidget: (context, url, error) => Icon(Icons.broken_image_outlined, size: 50, color: colors.onSurfaceVariant.withOpacity(0.5)),
+                      )
+                    : Icon(Icons.apartment_rounded, size: 60, color: colors.onSurfaceVariant.withOpacity(0.5))),
+          ),
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Material(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: _pickImage,
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.edit, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, String hint, IconData icon, {TextInputType keyboardType = TextInputType.text}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: GoogleFonts.poppins(),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Please enter the $label.';
+        if (keyboardType == TextInputType.number && int.tryParse(value) == null) return 'Please enter a valid number.';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildRoomTypeDropdown(ColorScheme colors) {
+    return DropdownButtonFormField<String>(
+      value: _selectedRoomType,
+      style: GoogleFonts.poppins(),
+      decoration: InputDecoration(
+        labelText: 'Room Type',
+        prefixIcon: const Icon(Icons.king_bed_outlined, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      items: _roomTypes.map((type) {
+        return DropdownMenuItem(
+          value: type,
+          child: Text(type[0].toUpperCase() + type.substring(1)),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) setState(() => _selectedRoomType = value);
+      },
+    );
+  }
+
+  Widget _buildUpdateButton(ColorScheme colors) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _updateRoom,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        child: _isLoading
+            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+            : const Text('Save Changes'),
       ),
     );
   }
