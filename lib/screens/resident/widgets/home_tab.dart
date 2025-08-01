@@ -43,8 +43,8 @@ class HomeTab extends StatelessWidget {
                       ListTile(
                         leading: const Icon(Icons.king_bed_outlined),
                         title: Text(
-                            'Room ${authProvider.activeBooking!['room']?['room_number'] ?? 'N/A'} - Bed ${authProvider.activeBooking!['bed']?['bed_number'] ?? 'N/A'}'),
-                        subtitle: Text(authProvider.activeBooking!['room']?['room_type'] ?? 'No room details'),
+                            'Room ${authProvider.activeBooking!['rooms']?['room_number'] ?? 'N/A'} - Bed ${authProvider.activeBooking!['beds']?['bed_number'] ?? 'N/A'}'),
+                        subtitle: Text(authProvider.activeBooking!['rooms']?['room_type'] ?? 'No room details'),
                       )
                     else
                       const ListTile(

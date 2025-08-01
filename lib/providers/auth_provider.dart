@@ -273,8 +273,12 @@ class AuthProvider extends ChangeNotifier {
     if (userRole != 'resident') return;
     _setLoading(true);
     try {
-      _residentBookings = await ResidentService.getResidentBookings();
-      _hasApprovedBooking = _residentBookings.any((booking) => booking['status'] == 'approved');
+      _residentBookings = await Supabase.instance.client
+          .from('bookings')
+          .select('*, rooms(*), beds(*)')
+          .eq('resident_id', _user!.id)
+          .order('created_at', ascending: false);
+      _hasApprovedBooking = _residentBookings.any((b) => b['status'] == 'approved');
     } catch (e) {
       _setError('Failed to load your bookings: ${_getErrorMessage(e)}');
     } finally {
