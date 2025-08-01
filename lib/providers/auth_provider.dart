@@ -628,6 +628,22 @@ class AuthProvider extends ChangeNotifier {
     await StaffService.deleteRoom(roomId);
   }
 
+  Future<List<Map<String, dynamic>>> fetchChatContacts() async {
+    if (_user == null) throw Exception('User not authenticated');
+
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('id, full_name, avatar_url, bookings!inner(rooms(room_number))')
+          .eq('role', 'resident');
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      _setError('Failed to fetch chat contacts: ${_getErrorMessage(e)}');
+      rethrow;
+    }
+  }
+
   String _getErrorMessage(dynamic error) {
     if (error is AuthException) {
       return error.message;
