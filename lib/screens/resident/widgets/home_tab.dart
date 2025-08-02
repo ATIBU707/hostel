@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/auth_provider.dart';
 
 class HomeTab extends StatelessWidget {
@@ -29,33 +31,7 @@ class HomeTab extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Room Information Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Your Room', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    if (authProvider.activeBooking != null)
-                      ListTile(
-                        leading: const Icon(Icons.king_bed_outlined),
-                        title: Text(
-                            'Room ${authProvider.activeBooking!['rooms']?['room_number'] ?? 'N/A'} - Bed ${authProvider.activeBooking!['beds']?['bed_number'] ?? 'N/A'}'),
-                        subtitle: Text(authProvider.activeBooking!['rooms']?['room_type'] ?? 'No room details'),
-                      )
-                    else
-                      const ListTile(
-                        leading: Icon(Icons.info_outline),
-                        title: Text('No Active Booking'),
-                        subtitle: Text('Please contact administration.'),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+            _buildRoomInfoCard(context, authProvider),
             const SizedBox(height: 24),
 
             // Quick Actions
@@ -131,6 +107,141 @@ class HomeTab extends StatelessWidget {
             Text(label, textAlign: TextAlign.center),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRoomInfoCard(BuildContext context, AuthProvider authProvider) {
+    final approvedBooking = authProvider.activeBooking;
+    Map<String, dynamic>? pendingBooking;
+    try {
+      pendingBooking = authProvider.residentBookings.firstWhere((b) => b['status'] == 'pending');
+    } catch (e) {
+      pendingBooking = null;
+    }
+
+    final bookingToShow = approvedBooking ?? pendingBooking;
+
+    if (bookingToShow == null) {
+      return _buildNoBookingCard();
+    }
+
+    final room = bookingToShow['rooms'];
+    final bed = bookingToShow['beds'];
+    final status = bookingToShow['status'];
+
+    final imageUrl = room?['image_url'] as String?;
+    final roomNumber = room?['room_number']?.toString() ?? 'N/A';
+    final roomType = room?['room_type'] ?? 'Unknown';
+    final bedNumber = bed?['bed_number']?.toString() ?? 'N/A';
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (imageUrl != null)
+            Stack(
+              alignment: Alignment.bottomLeft,
+              children: [
+                CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: Icon(Icons.broken_image, color: Colors.grey.shade400, size: 40),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                  ),
+                  child: Text(
+                    'Room $roomNumber - $roomType',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Your Assigned Space', style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text('Bed $bedNumber', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                _buildStatusChip(status),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoBookingCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: ListTile(
+          leading: Icon(Icons.info_outline, size: 32),
+          title: Text('No Active Booking', style: TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text('Book a room to see your details here.'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    final isApproved = status == 'approved';
+    final isPending = status == 'pending';
+    final Color chipColor = isApproved ? Colors.green.shade100 : (isPending ? Colors.orange.shade100 : Colors.grey.shade200);
+    final Color textColor = isApproved ? Colors.green.shade800 : (isPending ? Colors.orange.shade800 : Colors.grey.shade800);
+    final IconData icon = isApproved ? Icons.check_circle_outline : (isPending ? Icons.hourglass_empty_rounded : Icons.help_outline);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: chipColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: textColor, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: textColor, fontSize: 12),
+          ),
+        ],
       ),
     );
   }
