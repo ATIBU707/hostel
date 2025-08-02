@@ -134,6 +134,7 @@ class HomeTab extends StatelessWidget {
     final roomNumber = room?['room_number']?.toString() ?? 'N/A';
     final roomType = room?['room_type'] ?? 'Unknown';
     final bedNumber = bed?['bed_number']?.toString() ?? 'N/A';
+    final hostelName = room?['hostel_name']?.toString() ?? 'No Hostel';
 
     return Card(
       elevation: 4,
@@ -172,13 +173,30 @@ class HomeTab extends StatelessWidget {
                       end: Alignment.topCenter,
                     ),
                   ),
-                  child: Text(
-                    'Room $roomNumber - $roomType',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        hostelName.toUpperCase(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Room $roomNumber - $roomType',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
