@@ -142,6 +142,8 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
               itemCount: rooms.length,
               itemBuilder: (context, index) {
                 final room = rooms[index];
+                final hostelName = room['hostel']?['hostel_name'] ?? room['hostel_name'];
+                final imageUrl = room['image_url'];
                 print('DEBUG: Processing room $index: ${room['room_number']}');
                 print('DEBUG: Room beds raw: ${room['beds']}');
                 
@@ -170,6 +172,42 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Room Image
+                        if (imageUrl != null && imageUrl.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: Image.network(
+                                imageUrl,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return const Center(
+                                    child: SizedBox(
+                                      height: 200,
+                                      child: Center(child: CircularProgressIndicator()),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const SizedBox(
+                                    height: 200,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        size: 48,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+
                         // Room Header
                         Row(
                           children: [
@@ -180,11 +218,23 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
-                                'Room ${room['room_number']} - ${room['room_type']}',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (hostelName != null)
+                                    Text(
+                                      hostelName,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            color: Colors.grey[600],
+                                          ),
                                     ),
+                                  Text(
+                                    'Room ${room['room_number']} - ${room['room_type']}',
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

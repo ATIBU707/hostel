@@ -159,7 +159,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
             width: 150,
             height: 150,
             decoration: BoxDecoration(
-              color: colors.surfaceVariant.withOpacity(0.5),
+              color: colors.surfaceContainerHighest.withOpacity(0.5),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: colors.outline.withOpacity(0.3), width: 1),
             ),

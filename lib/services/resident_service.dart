@@ -115,17 +115,10 @@ class ResidentService {
           .from('rooms')
           .select('''
             *,
-            beds(
-              id,
-              bed_number,
-              is_available
-            ),
-            profiles!rooms_staff_id_fkey(
-              id,
-              full_name,
-              phone,
-              role
-            )
+            image_url,
+            hostel:hostels (hostel_name:name),
+            beds(id, bed_number, is_available),
+            profiles:profiles!rooms_staff_id_fkey(id, full_name, phone, role)
           ''')
           .eq('is_available', true)
           .order('created_at', ascending: false);
@@ -133,7 +126,14 @@ class ResidentService {
       print('Rooms with beds fetched: ${response.length} rooms found');
       
       // Filter rooms that have at least one available bed
-      final roomsWithAvailableBeds = response.where((room) {
+      final roomsWithAvailableBeds = response.map((room) {
+        // Flatten the hostel data
+        final hostelData = room.remove('hostel');
+        if (hostelData != null) {
+          room['hostel_name'] = hostelData['hostel_name'];
+        }
+        return room;
+      }).where((room) {
         final beds = room['beds'] as List?;
         if (beds == null || beds.isEmpty) {
           print('Room ${room['room_number']} has no beds');
