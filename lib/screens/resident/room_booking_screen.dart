@@ -366,7 +366,7 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                                         builder: (context) => AlertDialog(
                                           title: const Text('Confirm Booking'),
                                           content: Text(
-                                            'Do you want to book Bed ${bed['bed_number']} in Room ${room['room_number']}?\n\nRent: KSh ${room['rent_amount']}/month',
+                                            'Do you want to book Bed ${bed['bed_number']} in Room ${room['room_number']}?\n\nRent: UGX ${room['rent_amount']}',
                                           ),
                                           actions: [
                                             TextButton(
