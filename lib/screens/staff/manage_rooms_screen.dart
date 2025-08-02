@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../providers/auth_provider.dart';
+import 'add_room_screen.dart';
 import 'edit_room_screen.dart';
 import 'staff_drawer.dart';
 
@@ -91,8 +92,9 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
       drawer: StaffDrawer(),
       backgroundColor: colors.surface, // Use theme surface color
       appBar: AppBar(
-        title: Text('Manage Rooms', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: colors.onSurface)),
-        backgroundColor: colors.surface,
+        title: Text('Manage Rooms', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,        
         elevation: 0,
         scrolledUnderElevation: 1,
         shadowColor: colors.shadow.withOpacity(0.2),
@@ -113,6 +115,21 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
           : _staffRooms.isEmpty
               ? _buildEmptyState()
               : _buildRoomsList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddRoomScreen()),
+          );
+          if (result == true) {
+            _loadStaffRooms();
+          }
+        },
+        label: Text('Add Room', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: colors.onPrimary,
+      ),
     );
   }
 
@@ -132,6 +149,24 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
             'Add a new room to see it here.',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey.shade500),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddRoomScreen()),
+              );
+              if (result == true) {
+                _loadStaffRooms();
+              }
+            },
+            icon: const Icon(Icons.add_home_work_outlined),
+            label: Text('Add New Room', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
           ),
         ],
       ),
