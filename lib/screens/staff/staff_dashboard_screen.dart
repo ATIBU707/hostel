@@ -38,10 +38,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       return Scaffold(
         drawer: StaffDrawer(),
         appBar: AppBar(
-          title: Text('Staff Portal - ${role.toUpperCase()}'),
+          title: Text('${role.toUpperCase()} PORTAL'),
           backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: 0,   
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
