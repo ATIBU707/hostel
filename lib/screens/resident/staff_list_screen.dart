@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hostelapp/services/chat_service.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'chat_screen.dart';
@@ -11,6 +12,7 @@ class StaffListScreen extends StatefulWidget {
 }
 
 class _StaffListScreenState extends State<StaffListScreen> {
+  final ChatService _chatService = ChatService();
   @override
   void initState() {
     super.initState();
@@ -115,18 +117,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                         // Call button (if phone available)
                         if (member['phone'] != null)
                           IconButton(
-                            onPressed: () {
-                              // You can implement phone calling functionality here
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Call ${member['phone']}'),
-                                  action: SnackBarAction(
-                                    label: 'OK',
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: () => _chatService.launchPhoneDialer(member['phone']),
                             icon: const Icon(Icons.phone, color: Colors.green),
                             tooltip: 'Call',
                           ),
