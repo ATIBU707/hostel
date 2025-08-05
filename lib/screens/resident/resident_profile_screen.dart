@@ -52,9 +52,11 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
     final userProfile = authProvider.userProfile;
 
     if (userProfile != null) {
-      _nameController.text = userProfile['full_name'] ?? '';
-      _emailController.text = authProvider.user?.email ?? '';
-      _phoneController.text = userProfile['phone'] ?? '';
+      setState(() {
+        _nameController.text = userProfile['full_name'] ?? '';
+        _emailController.text = authProvider.user?.email ?? '';
+        _phoneController.text = userProfile['phone'] ?? '';
+      });
     }
   }
 
@@ -183,11 +185,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_nameController.text.isEmpty && authProvider.userProfile != null) {
-            _loadProfileData();
-          }
-        });
+        
         if (authProvider.userProfile == null) {
           return const Center(child: CircularProgressIndicator());
         }
