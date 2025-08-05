@@ -88,10 +88,9 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.home_work,
-                        color: Theme.of(context).primaryColor,
-                        size: 60,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30.0),
+                        child: Image.asset('assets/images/logo.jpg', height: 150),
                       ),
                     ),
                     

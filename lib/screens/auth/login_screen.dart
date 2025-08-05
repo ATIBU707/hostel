@@ -62,17 +62,11 @@ class _LoginScreenState extends State<LoginScreen> {
               // Logo and Title
               Column(
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.home_work,
-                      color: Colors.white,
-                      size: 40,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20.0),
+                    child: Image.asset(
+                      'assets/images/logo.jpg',
+                      height: 100,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -144,7 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: 'Password',
                         hintText: 'Enter your password',
+                        // prefixIcon: Image.asset('assets/images/logo.jpg', height: 24),
                         prefixIcon: const Icon(Icons.lock_outline),
+
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
