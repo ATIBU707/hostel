@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hostelapp/screens/resident/resident_profile_screen.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'widgets/home_tab.dart';
-import 'widgets/profile_tab.dart';
+// import 'widgets/profile_tab.dart';
 import 'widgets/payments_tab.dart';
 import 'widgets/maintenance_tab.dart';
 
@@ -26,7 +27,7 @@ class _ResidentDashboardScreenState extends State<ResidentDashboardScreen> {
         onNavigateToTab: _onItemTapped,
         onCreateNewRequest: () => _showCreateRequestDialog(context),
       ),
-      const ProfileTab(),
+      const ResidentProfileScreen(),
       const PaymentsTab(),
       MaintenanceTab(
         onCreateNewRequest: () => _showCreateRequestDialog(context),

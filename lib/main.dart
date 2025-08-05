@@ -8,7 +8,7 @@ import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/resident/resident_dashboard_screen.dart';
-import 'screens/resident/edit_profile_screen.dart';
+
 import 'screens/resident/announcements_screen.dart';
 import 'screens/resident/room_booking_screen.dart';
 import 'screens/resident/staff_list_screen.dart';
@@ -81,7 +81,7 @@ class HostelManagerApp extends StatelessWidget {
         // '/manager-dashboard': (context) => const ManagerDashboard(),
         // '/staff-dashboard': (context) => const StaffDashboard(),
         '/resident-dashboard': (context) => const ResidentDashboardScreen(),
-        '/edit-profile': (context) => const EditProfileScreen(),
+        
         '/announcements': (context) => const AnnouncementsScreen(),
         '/book-room': (context) => const RoomBookingScreen(),
         '/staff-list': (context) => const StaffListScreen(),

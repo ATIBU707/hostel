@@ -1,79 +1,72 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../providers/auth_provider.dart';
+// // e:\hostel\lib\screens\resident\widgets\profile_tab.dart
 
-class ProfileTab extends StatelessWidget {
-  const ProfileTab({super.key});
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import '../../../providers/auth_provider.dart';
+// import '../resident_profile_screen.dart';
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        final profile = authProvider.userProfile;
-        if (profile == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+// class ProfileTab extends StatelessWidget {
+//   const ProfileTab({super.key});
 
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            const SizedBox(height: 20),
-            // Avatar
-            Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: profile['avatar_url'] != null
-                    ? NetworkImage(profile['avatar_url'])
-                    : null,
-                child: profile['avatar_url'] == null
-                    ? const Icon(Icons.person, size: 50)
-                    : null,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Full Name
-            Center(
-              child: Text(
-                profile['full_name'] ?? 'N/A',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 10),
-            // Role
-            Center(
-              child: Chip(
-                label: Text(profile['role'] ?? 'resident'),
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Divider(),
-            // Profile Details
-            _buildProfileDetail(Icons.email_outlined, 'Email', profile['email'] ?? 'N/A'),
-            _buildProfileDetail(Icons.phone_outlined, 'Phone', profile['phone'] ?? 'N/A'),
-            const Divider(),
-            const SizedBox(height: 20),
-            // Edit Profile Button
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/edit-profile');
-              },
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit Profile'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     final authProvider = Provider.of<AuthProvider>(context);
+//     final user = authProvider.user;
 
-  Widget _buildProfileDetail(IconData icon, String title, String value) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16)),
-    );
-  }
-}
+//     final String userName = user?.userMetadata?['name'] ?? 'Resident Name';
+//     final String userEmail = user?.email ?? 'resident@email.com';
+//     final String profileImageUrl = user?.userMetadata?['profile_url'] ?? 'https://via.placeholder.com/150';
+
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('Profile'),
+//         actions: [
+//           IconButton(
+//             icon: const Icon(Icons.edit),
+//             onPressed: () {
+//               Navigator.of(context).push(MaterialPageRoute(
+//                 builder: (context) => const ResidentProfileScreen(),
+//               ));
+//             },
+//             tooltip: 'Edit Profile',
+//           ),
+//         ],
+//         automaticallyImplyLeading: false,
+//       ),
+//       body: SingleChildScrollView(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Center(
+//           child: Column(
+//             children: [
+//               CircleAvatar(
+//                 radius: 60,
+//                 backgroundImage: NetworkImage(profileImageUrl),
+//               ),
+//               const SizedBox(height: 16),
+//               Text(
+//                 userName,
+//                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+//               ),
+//               const SizedBox(height: 8),
+//               Text(
+//                 userEmail,
+//                 style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+//               ),
+//               const SizedBox(height: 32),
+//               const Divider(),
+//               ListTile(
+//                 leading: const Icon(Icons.logout, color: Colors.red),
+//                 title: const Text('Logout', style: TextStyle(color: Colors.red)),
+//                 onTap: () async {
+//                   await Provider.of<AuthProvider>(context, listen: false).signOut();
+//                   Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+//                 },
+//               ),
+//               const Divider(),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }

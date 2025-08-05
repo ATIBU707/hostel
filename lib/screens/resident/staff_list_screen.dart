@@ -59,10 +59,15 @@ class _StaffListScreenState extends State<StaffListScreen> {
                     contentPadding: const EdgeInsets.all(16.0),
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue[100],
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.blue[700],
-                      ),
+                      backgroundImage: member['avatar_url'] != null
+                          ? NetworkImage(member['avatar_url']!)
+                          : null,
+                      child: member['avatar_url'] == null
+                          ? Icon(
+                              Icons.person,
+                              color: Colors.blue[700],
+                            )
+                          : null,
                     ),
                     title: Text(
                       member['full_name'] ?? 'N/A',
