@@ -9,7 +9,6 @@ android {
     namespace = "com.example.hostelapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-    
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
