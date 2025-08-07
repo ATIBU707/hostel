@@ -330,6 +330,42 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> cancelBooking({required String bookingId}) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await Supabase.instance.client
+          .from('bookings')
+          .update({'status': 'cancelled'})
+          .eq('id', bookingId);
+      await fetchResidentBookings(); // Refresh the list
+    } catch (e) {
+      _setError('Failed to cancel booking: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> requestUnbook({required String bookingId}) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await Supabase.instance.client
+          .from('bookings')
+          .update({'status': 'unbooking_requested'})
+          .eq('id', bookingId);
+      await fetchResidentBookings(); // Refresh the list
+    } catch (e) {
+      _setError('Failed to request unbooking: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchStaffMembers() async {
     _setLoading(true);
     try {
@@ -357,6 +393,56 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Staff-Specific Methods
+
+  Future<void> fetchUnbookingRequests() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final response = await Supabase.instance.client
+          .from('bookings')
+          .select('*, rooms(*, hostels(*)), beds(*), profiles(*)')
+          .eq('status', 'unbooking_requested')
+          .order('created_at', ascending: true);
+      _staffBookings = List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      _setError('Failed to fetch unbooking requests: ${_getErrorMessage(e)}');
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> approveUnbooking({required String bookingId, required String bedId}) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await Supabase.instance.client.from('bookings').update({'status': 'cancelled'}).eq('id', bookingId);
+      await Supabase.instance.client.from('beds').update({'is_available': true}).eq('id', bedId);
+      await fetchUnbookingRequests(); // Refresh the list
+    } catch (e) {
+      _setError('Failed to approve unbooking: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> denyUnbooking({required String bookingId}) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await Supabase.instance.client.from('bookings').update({'status': 'approved'}).eq('id', bookingId);
+      await fetchUnbookingRequests(); // Refresh the list
+    } catch (e) {
+      _setError('Failed to deny unbooking: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchStaffMaintenanceRequests() async {
     _setLoading(true);
     try {

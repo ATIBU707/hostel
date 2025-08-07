@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'my_bookings_screen.dart';
 
 class ResidentProfileScreen extends StatefulWidget {
   const ResidentProfileScreen({super.key});
@@ -365,6 +366,44 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Bookings Section
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Manage Bookings',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            leading: const Icon(Icons.book_online_outlined),
+                            title: const Text('View My Bookings'),
+                            subtitle: const Text('Cancel or manage your room bookings.'),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MyBookingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
 
                   // Security Section

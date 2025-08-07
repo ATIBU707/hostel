@@ -7,6 +7,7 @@ import 'staff_chat_screen.dart';
 import 'staff_dashboard_screen.dart';
 import 'staff_profile_screen.dart';
 import 'staff_reports_screen.dart';
+import 'unbooking_requests_screen.dart';
 // import 'add_room_screen.dart';
 
 class StaffDrawer extends StatelessWidget {
@@ -74,6 +75,16 @@ class StaffDrawer extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => ReservationApprovalScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.event_busy_outlined),
+            title: Text('Unbooking Requests'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UnbookingRequestsScreen()),
               );
             },
           ),
