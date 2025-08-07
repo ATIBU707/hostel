@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,15 +42,38 @@ class _SplashScreenState extends State<SplashScreen>
     
     _animationController.forward();
     
-    // Navigate to login after splash
-    _navigateToLogin();
+    // Navigate after splash
+    _redirect();
   }
 
-  Future<void> _navigateToLogin() async {
+  Future<void> _redirect() async {
+    // Wait for the animation to finish
     await Future.delayed(const Duration(seconds: 3));
-    
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+
+    if (!mounted) return;
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      // Session exists, now fetch profile to determine role
+      try {
+        final profile = await AuthService.getUserProfile();
+        if (profile != null) {
+          final role = profile['role'];
+          if (role == 'staff' || role == 'admin') {
+            Navigator.of(context).pushReplacementNamed('/staff-dashboard');
+          } else {
+            Navigator.of(context).pushReplacementNamed('/resident-dashboard');
+          }
+        } else {
+          // Profile not found, force login
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      } catch (e) {
+        // Error fetching profile, force login
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } else {
+      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 

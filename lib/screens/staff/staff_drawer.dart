@@ -111,7 +111,9 @@ class StaffDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Logout'),
-            onTap: () {
+            onTap: () async {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              await authProvider.signOut();
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/',
