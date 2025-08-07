@@ -5,7 +5,7 @@ import '../../providers/auth_provider.dart';
 import 'widgets/home_tab.dart';
 // import 'widgets/profile_tab.dart';
 import 'widgets/payments_tab.dart';
-import 'widgets/maintenance_tab.dart';
+import 'room_booking_screen.dart';
 
 class ResidentDashboardScreen extends StatefulWidget {
   const ResidentDashboardScreen({super.key});
@@ -29,9 +29,7 @@ class _ResidentDashboardScreenState extends State<ResidentDashboardScreen> {
       ),
       const ResidentProfileScreen(),
       const PaymentsTab(),
-      MaintenanceTab(
-        onCreateNewRequest: () => _showCreateRequestDialog(context),
-      ),
+      const RoomBookingScreen(),
     ];
   }
 
@@ -133,8 +131,8 @@ class _ResidentDashboardScreenState extends State<ResidentDashboardScreen> {
             label: 'Payments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.build),
-            label: 'Maintenance',
+            icon: Icon(Icons.book_online),
+            label: 'Booking',
           ),
         ],
         currentIndex: _selectedIndex,

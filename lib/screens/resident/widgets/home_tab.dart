@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../providers/auth_provider.dart';
 
 class HomeTab extends StatelessWidget {
@@ -16,97 +17,122 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        final residentName = authProvider.userProfile?['full_name'] ?? 'Resident';
+    final authProvider = Provider.of<AuthProvider>(context);
+    final residentName = authProvider.userProfile?['full_name'] ?? 'Resident';
+    final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
 
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Welcome Message
-            Text(
-              'Welcome, $residentName!',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-
-            // Room Information Card
-            _buildRoomInfoCard(context, authProvider),
-            const SizedBox(height: 24),
-
-            // Quick Actions
-            const Text(
-              'Quick Actions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Builder(
-              builder: (context) {
-                final bool hasApprovedBooking = authProvider.activeBooking != null;
-                final bool canBookRoom = !authProvider.residentBookings.any((b) => b['status'] == 'approved' || b['status'] == 'pending');
-
-                List<Widget> actionCards = [];
-
-                if (canBookRoom) {
-                  actionCards.add(_buildActionCard(
-                    context,
-                    Icons.king_bed_outlined,
-                    'Book a Room',
-                    () => Navigator.pushNamed(context, '/book-room'),
-                  ));
-                }
-
-                if (hasApprovedBooking) {
-                  actionCards.addAll([
-                    _buildActionCard(context, Icons.payment, 'Pay Rent', () {}),
-                    _buildActionCard(context, Icons.build, 'New Request', onCreateNewRequest),
-                    _buildActionCard(
-                      context,
-                      Icons.receipt_long,
-                      'Payment History',
-                      () => onNavigateToTab(2),
-                    ),
-                  ]);
-                }
-
-                actionCards.add(_buildActionCard(
-                  context,
-                  Icons.contact_support_outlined,
-                  'Contact Admin',
-                  () => Navigator.pushNamed(context, '/staff-list'),
-                ));
-
-                return GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: actionCards,
-                );
-              },
-            ),
-          ],
-        );
-      },
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        children: [
+          _buildHeader(residentName, today),
+          const SizedBox(height: 28),
+          _buildRoomInfoCard(context, authProvider),
+          const SizedBox(height: 28),
+          _buildQuickActions(context, authProvider),
+        ],
+      ),
     );
   }
 
-    Widget _buildActionCard(BuildContext context, IconData icon, String label, VoidCallback onTap) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
-            Text(label, textAlign: TextAlign.center),
-          ],
+  Widget _buildHeader(String name, String date) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          date.toUpperCase(),
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+            letterSpacing: 0.5,
+          ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Welcome, $name!',
+          style: GoogleFonts.poppins(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, AuthProvider authProvider) {
+    final bool hasApprovedBooking = authProvider.activeBooking != null;
+    final bool canBookRoom = !authProvider.residentBookings.any((b) => b['status'] == 'approved' || b['status'] == 'pending');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (canBookRoom)
+          _buildActionItem(
+            context,
+            Icons.king_bed_outlined,
+            'Book a Room',
+            'Find and reserve your new space',
+            () => Navigator.pushNamed(context, '/book-room'),
+          ),
+        if (hasApprovedBooking) ...[
+          _buildActionItem(
+            context,
+            Icons.payment_outlined,
+            'Make a Payment',
+            'Pay your monthly rent and dues',
+            () => onNavigateToTab(2), // Navigate to PaymentsTab
+          ),
+          _buildActionItem(
+            context,
+            Icons.build_outlined,
+            'New Maintenance Request',
+            'Report an issue in your room or common areas',
+            onCreateNewRequest,
+          ),
+        ],
+        _buildActionItem(
+          context,
+          Icons.contact_support_outlined,
+          'Contact Staff',
+          'Get in touch with the hostel administration',
+          () => Navigator.pushNamed(context, '/staff-list'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionItem(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(icon, color: Theme.of(context).primaryColor, size: 28),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       ),
     );
   }
@@ -123,7 +149,7 @@ class HomeTab extends StatelessWidget {
     final bookingToShow = approvedBooking ?? pendingBooking;
 
     if (bookingToShow == null) {
-      return _buildNoBookingCard();
+      return _buildNoBookingCard(context);
     }
 
     final room = bookingToShow['rooms'];
@@ -138,6 +164,7 @@ class HomeTab extends StatelessWidget {
 
     return Card(
       elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -155,7 +182,7 @@ class HomeTab extends StatelessWidget {
                   placeholder: (context, url) => Container(
                     height: 180,
                     color: Colors.grey.shade200,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                   ),
                   errorWidget: (context, url, error) => Container(
                     height: 180,
@@ -165,10 +192,10 @@ class HomeTab extends StatelessWidget {
                 ),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                      colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                     ),
@@ -180,7 +207,7 @@ class HomeTab extends StatelessWidget {
                       Text(
                         hostelName.toUpperCase(),
                         style: GoogleFonts.poppins(
-                          color: Colors.white,
+                          color: Colors.white.withOpacity(0.9),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.0,
@@ -223,16 +250,42 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildNoBookingCard() {
+  Widget _buildNoBookingCard(BuildContext context) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: ListTile(
-          leading: Icon(Icons.info_outline, size: 32),
-          title: Text('No Active Booking', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text('Book a room to see your details here.'),
+      elevation: 0,
+      color: Theme.of(context).primaryColor.withOpacity(0.05),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.2), width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          children: [
+            Icon(Icons.king_bed_outlined, size: 40, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 12),
+            Text(
+              'No Active Booking',
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'You don\'t have a room yet. Let\'s find one for you!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(color: Colors.grey.shade700, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/book-room'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text('Book a Room Now', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            ),
+          ],
         ),
       ),
     );
@@ -257,7 +310,7 @@ class HomeTab extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             status.toUpperCase(),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: textColor, fontSize: 12),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: textColor, fontSize: 12, letterSpacing: 0.5),
           ),
         ],
       ),
