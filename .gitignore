@@ -1,4 +1,7 @@
 # Miscellaneous
+
+# Flutter/Dart secrets
+.env
 *.class
 *.log
 *.pyc
