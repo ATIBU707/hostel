@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'config/supabase_config.dart';
 
 import 'package:provider/provider.dart';
 
@@ -18,7 +17,10 @@ import 'screens/staff/staff_dashboard_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SupabaseConfig.initialize();
+  await Supabase.initialize(
+    url: 'https://oqluvwbcltmasmqtuvbm.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xbHV2d2JjbHRtYXNtcXR1dmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1MDU5MzUsImV4cCI6MjA2OTA4MTkzNX0.L-V1hromigxU7VHS-Lezav_Vg6ct0S2ts5s0HxopXx4',
+  );
   
   runApp(const HostelManagerApp());
 }
