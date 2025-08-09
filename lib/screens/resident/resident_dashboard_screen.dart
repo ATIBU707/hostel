@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import 'widgets/home_tab.dart';
 // import 'widgets/profile_tab.dart';
 import 'widgets/payments_tab.dart';
+import 'staff_list_screen.dart';
 import 'room_booking_screen.dart';
 
 class ResidentDashboardScreen extends StatefulWidget {
@@ -27,9 +28,10 @@ class _ResidentDashboardScreenState extends State<ResidentDashboardScreen> {
         onNavigateToTab: _onItemTapped,
         onCreateNewRequest: () => _showCreateRequestDialog(context),
       ),
-      const ResidentProfileScreen(),
       const PaymentsTab(),
+      const StaffListScreen(),
       const RoomBookingScreen(),
+      const ResidentProfileScreen(),
     ];
   }
 
@@ -116,29 +118,45 @@ class _ResidentDashboardScreenState extends State<ResidentDashboardScreen> {
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.payment),
-            label: 'Payments',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book_online),
-            label: 'Booking',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade200, width: 1.0)),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 1 ? Icons.payment : Icons.payment_outlined),
+              label: 'Payments',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 2 ? Icons.chat_bubble : Icons.chat_bubble_outline),
+              label: 'Messages',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 3 ? Icons.book_online : Icons.book_online_outlined),
+              label: 'Booking',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 4 ? Icons.person : Icons.person_outline),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Colors.grey.shade600,
+          onTap: _onItemTapped,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          showSelectedLabels: true,
+          showUnselectedLabels: false,
+        ),
       ),
     );
   }

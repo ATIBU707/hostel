@@ -8,6 +8,7 @@ import 'staff_dashboard_screen.dart';
 import 'staff_profile_screen.dart';
 import 'staff_reports_screen.dart';
 import 'unbooking_requests_screen.dart';
+import 'maintenance_requests_screen.dart';
 // import 'add_room_screen.dart';
 
 class StaffDrawer extends StatelessWidget {
@@ -85,6 +86,16 @@ class StaffDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const UnbookingRequestsScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.build_circle_outlined),
+            title: Text('Maintenance'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MaintenanceRequestsScreen()),
               );
             },
           ),

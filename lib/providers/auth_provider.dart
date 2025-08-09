@@ -98,13 +98,23 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _loadResidentData() async {
     try {
-      _activeBooking = await ResidentService.getActiveBooking();
+      await fetchResidentBookings();
+      // Set the active booking for other parts of the app that need it.
+      final activeBookings = _residentBookings.where((b) => b['status'] == 'active');
+      _activeBooking = activeBookings.isNotEmpty ? activeBookings.first : null;
+
+      // Find the first relevant booking to load maintenance requests.
+      final relevantBookings = _residentBookings.where((b) => b['status'] == 'approved' || b['status'] == 'active');
+      if (relevantBookings.isNotEmpty) {
+        final relevantBookingId = relevantBookings.first['id'];
+        await _loadMaintenanceRequests(bookingId: relevantBookingId);
+      }
+
+      // Load payments only if there is a truly active booking.
       if (_activeBooking != null) {
         await _loadPayments();
-        await _loadMaintenanceRequests();
       }
-      // await _loadAnnouncements();
-      await fetchResidentBookings();
+      
       await fetchAllBookings();
     } catch (e) {
       _setError('Failed to load resident data: ${_getErrorMessage(e)}');
@@ -212,16 +222,26 @@ class AuthProvider extends ChangeNotifier {
     required String category,
     required String description,
   }) async {
-    if (_activeBooking == null) return;
+    final approvedOrActive = _residentBookings
+        .where((b) => b['status'] == 'approved' || b['status'] == 'active');
+
+    final relevantBooking = approvedOrActive.isNotEmpty ? approvedOrActive.first : _activeBooking;
+
+    if (relevantBooking == null) {
+      _setError('You must have an approved or active booking to create a request.');
+      notifyListeners();
+      return;
+    }
+
     _setLoading(true);
     _clearError();
     try {
       await ResidentService.createMaintenanceRequest(
-        bookingId: _activeBooking!['id'],
+        bookingId: relevantBooking['id'],
         category: category,
         description: description,
       );
-      await _loadMaintenanceRequests();
+      await _loadMaintenanceRequests(bookingId: relevantBooking['id']);
     } catch (e) {
       _setError(_getErrorMessage(e));
     } finally {
@@ -239,10 +259,8 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadMaintenanceRequests() async {
-    if (_activeBooking == null) return;
+  Future<void> _loadMaintenanceRequests({required String bookingId}) async {
     try {
-      final bookingId = _activeBooking!['id'];
       _maintenanceRequests = await ResidentService.getMaintenanceRequests(bookingId);
     } catch (e) {
       _setError('Failed to load maintenance requests: ${_getErrorMessage(e)}');
@@ -443,10 +461,32 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateMaintenanceRequestStatus({required String requestId, required String newStatus}) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await Supabase.instance.client
+          .from('maintenance_requests')
+          .update({'status': newStatus})
+          .eq('id', requestId);
+      await fetchStaffMaintenanceRequests(); // Refresh the list
+    } catch (e) {
+      _setError('Failed to update maintenance request: ${_getErrorMessage(e)}');
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchStaffMaintenanceRequests() async {
     _setLoading(true);
     try {
-      _staffMaintenanceRequests = await StaffService.getMaintenanceRequests();
+      final response = await Supabase.instance.client
+          .from('maintenance_requests')
+          .select('*, bookings(*, profiles(*), rooms(*))')
+          .order('created_at', ascending: false);
+      _staffMaintenanceRequests = List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
       _setError('Failed to load staff maintenance requests: ${_getErrorMessage(e)}');
     } finally {

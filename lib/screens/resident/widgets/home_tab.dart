@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'maintenance_request_card.dart';
 import '../../../providers/auth_provider.dart';
 
 class HomeTab extends StatelessWidget {
@@ -24,13 +25,13 @@ class HomeTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        padding: const EdgeInsets.all(24.0),
         children: [
           _buildHeader(residentName, today),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           _buildRoomInfoCard(context, authProvider),
-          const SizedBox(height: 28),
-          _buildQuickActions(context, authProvider),
+          const SizedBox(height: 24),
+          _buildDashboardSections(context, authProvider),
         ],
       ),
     );
@@ -62,54 +63,191 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, AuthProvider authProvider) {
-    final bool hasApprovedBooking = authProvider.activeBooking != null;
-    final bool canBookRoom = !authProvider.residentBookings.any((b) => b['status'] == 'approved' || b['status'] == 'pending');
+  Widget _buildDashboardSections(BuildContext context, AuthProvider authProvider) {
+    return Column(
+      children: [
+        _buildPaymentsSummaryCard(context, authProvider),
+        const SizedBox(height: 16),
+        _buildMaintenanceSummaryCard(context, authProvider),
+        const SizedBox(height: 16),
+        _buildQuickActionsGrid(context, authProvider),
+      ],
+    );
+  }
+
+  Widget _buildPaymentsSummaryCard(BuildContext context, AuthProvider authProvider) {
+    final payments = authProvider.payments;
+
+    if (payments == null || payments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final lastPayment = payments.first;
+    final lastPaymentDate = DateFormat.yMMMd().format(DateTime.parse(lastPayment['payment_date']));
+    final lastPaymentAmount = "KES ${lastPayment['amount']}";
+
+    // Placeholder for next due date logic
+    final nextDueDate = DateFormat.yMMMd().format(DateTime.now().add(const Duration(days: 30)));
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My Payments',
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildInfoTile('Last Payment', lastPaymentAmount, Colors.green)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildInfoTile('Next Due', nextDueDate, Colors.red)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => onNavigateToTab(2), // Navigate to PaymentsTab
+                child: const Text('Make a Payment'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaintenanceSummaryCard(BuildContext context, AuthProvider authProvider) {
+    final requests = authProvider.maintenanceRequests;
+
+    if (requests == null || requests.isEmpty) {
+      return const SizedBox.shrink(); // Don't show the card if there are no requests
+    }
+
+    final pendingCount = requests.where((r) => r['status'] == 'pending').length;
+    final inProgressCount = requests.where((r) => r['status'] == 'in_progress').length;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Maintenance Requests',
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildInfoTile('Pending', pendingCount.toString(), Colors.orange)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildInfoTile('In Progress', inProgressCount.toString(), Colors.blue)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => _showRequestsDialog(context, authProvider),
+                child: const Text('View All Requests'),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsGrid(BuildContext context, AuthProvider authProvider) {
+    final bool hasActiveBooking = authProvider.activeBooking != null;
+    final bool canBookRoom = !authProvider.residentBookings.any((b) => ['approved', 'pending', 'active'].contains(b['status']));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
+          'How Can We Help?',
+          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
         ),
         const SizedBox(height: 16),
-        if (canBookRoom)
-          _buildActionItem(
-            context,
-            Icons.king_bed_outlined,
-            'Book a Room',
-            'Find and reserve your new space',
-            () => Navigator.pushNamed(context, '/book-room'),
-          ),
-        if (hasApprovedBooking) ...[
-          _buildActionItem(
-            context,
-            Icons.payment_outlined,
-            'Make a Payment',
-            'Pay your monthly rent and dues',
-            () => onNavigateToTab(2), // Navigate to PaymentsTab
-          ),
-          _buildActionItem(
-            context,
-            Icons.build_outlined,
-            'New Maintenance Request',
-            'Report an issue in your room or common areas',
-            onCreateNewRequest,
-          ),
-        ],
-        _buildActionItem(
-          context,
-          Icons.contact_support_outlined,
-          'Contact Staff',
-          'Get in touch with the hostel administration',
-          () => Navigator.pushNamed(context, '/staff-list'),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.2,
+          children: [
+            if (canBookRoom)
+              _buildActionCard(
+                context,
+                icon: Icons.king_bed_outlined,
+                label: 'Book a Room',
+                onTap: () => Navigator.pushNamed(context, '/book-room'),
+              ),
+            if (hasActiveBooking)
+              _buildActionCard(
+                context,
+                icon: Icons.build_outlined,
+                label: 'New Request',
+                onTap: onCreateNewRequest,
+              ),
+            _buildActionCard(
+              context,
+              icon: Icons.contact_support_outlined,
+              label: 'Contact Staff',
+              onTap: () => Navigator.pushNamed(context, '/staff-list'),
+            ),
+            _buildActionCard(
+              context,
+              icon: Icons.article_outlined,
+              label: 'View Notices',
+              onTap: () { /* TODO: Navigate to notices screen */ },
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildActionCard(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -285,6 +423,95 @@ class HomeTab extends StatelessWidget {
               ),
               child: Text('Book a Room Now', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoTile(String title, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
+
+  void _showRequestsDialog(BuildContext context, AuthProvider authProvider) {
+    final requests = authProvider.maintenanceRequests ?? [];
+    final groupedRequests = <String, List<dynamic>>{};
+
+    for (var request in requests) {
+      final status = request['status'] as String? ?? 'unknown';
+      (groupedRequests[status] ??= []).add(request);
+    }
+
+    // Define the desired order of statuses
+    const statusOrder = ['pending', 'in_progress', 'completed', 'cancelled', 'unknown'];
+    final sortedKeys = groupedRequests.keys.toList()
+      ..sort((a, b) {
+        int indexA = statusOrder.indexOf(a);
+        int indexB = statusOrder.indexOf(b);
+        if (indexA == -1) indexA = statusOrder.length;
+        if (indexB == -1) indexB = statusOrder.length;
+        return indexA.compareTo(indexB);
+      });
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('My Maintenance Requests', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: requests.isEmpty
+                ? Text('You have not submitted any requests.', style: GoogleFonts.poppins())
+                : ListView(
+                    shrinkWrap: true,
+                    children: sortedKeys.map((status) {
+                      final statusRequests = groupedRequests[status]!;
+                      return _buildStatusCard(status, statusRequests);
+                    }).toList(),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Close'),
+            ),
+          ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusCard(String status, List<dynamic> requests) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${status[0].toUpperCase()}${status.substring(1)}'.replaceAll('_', ' '),
+              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(height: 20),
+            ...requests.map((req) => MaintenanceRequestCard(request: req)).toList(),
           ],
         ),
       ),
